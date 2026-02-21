@@ -1,17 +1,29 @@
 const Vehicle = require('../models/Vehicle');
 
-// @desc    Get all vehicles
+// @desc    Get all vehicles with pagination and filtering
 exports.getVehicles = async (req, res, next) => {
     try {
-        const { status, type, region, search } = req.query;
+        const { status, type, region, search, page = 1, limit = 10 } = req.query;
         const filter = {};
         if (status) filter.status = status;
         if (type) filter.type = type;
         if (region) filter.region = region;
         if (search) filter.name = { $regex: search, $options: 'i' };
 
-        const vehicles = await Vehicle.find(filter).sort({ createdAt: -1 });
-        res.json({ success: true, count: vehicles.length, data: vehicles });
+        const skip = (page - 1) * limit;
+        const [vehicles, total] = await Promise.all([
+            Vehicle.find(filter).sort({ createdAt: -1 }).skip(skip).limit(Number(limit)),
+            Vehicle.countDocuments(filter)
+        ]);
+
+        res.json({ 
+            success: true, 
+            count: vehicles.length, 
+            total,
+            pages: Math.ceil(total / limit),
+            currentPage: Number(page),
+            data: vehicles 
+        });
     } catch (err) {
         next(err);
     }

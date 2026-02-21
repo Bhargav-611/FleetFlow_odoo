@@ -41,6 +41,7 @@ export const statusColors = {
 };
 
 export const roleLabels = {
+    driver: 'Driver',
     fleet_manager: 'Fleet Manager',
     dispatcher: 'Dispatcher',
     safety_officer: 'Safety Officer',

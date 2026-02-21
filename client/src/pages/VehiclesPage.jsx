@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useAuth } from '@/context/AuthContext';
 import api from '@/lib/api';
 import { PageHeader } from '@/components/PageHeader';
 import { StatusBadge } from '@/components/StatusBadge';
@@ -17,6 +18,7 @@ import { formatNumber } from '@/lib/utils';
 const emptyVehicle = { name: '', licensePlate: '', type: 'Truck', maxCapacity: '', odometer: '', region: '', acquisitionCost: '', fuelType: 'Diesel' };
 
 export default function VehiclesPage() {
+    const { user } = useAuth();
     const [vehicles, setVehicles] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
@@ -24,6 +26,8 @@ export default function VehiclesPage() {
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editing, setEditing] = useState(null);
     const [form, setForm] = useState(emptyVehicle);
+
+    const canEdit = ['fleet_manager', 'dispatcher'].includes(user?.role);
 
     const fetchVehicles = async () => {
         try {
@@ -85,7 +89,7 @@ export default function VehiclesPage() {
     return (
         <div className="space-y-6 animate-fade-in">
             <PageHeader title="Vehicle Registry" description="Manage your fleet assets">
-                <Button onClick={openCreate}><Plus className="h-4 w-4 mr-2" /> Add Vehicle</Button>
+                {canEdit && <Button onClick={openCreate}><Plus className="h-4 w-4 mr-2" /> Add Vehicle</Button>}
             </PageHeader>
 
             {/* Filters */}
@@ -122,12 +126,12 @@ export default function VehiclesPage() {
                                     <TableHead>Odometer</TableHead>
                                     <TableHead>Region</TableHead>
                                     <TableHead>Status</TableHead>
-                                    <TableHead className="text-right">Actions</TableHead>
+                                    {canEdit && <TableHead className="text-right">Actions</TableHead>}
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {vehicles.length === 0 ? (
-                                    <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No vehicles found</TableCell></TableRow>
+                                    <TableRow><TableCell colSpan={canEdit ? 8 : 7} className="text-center py-8 text-muted-foreground">No vehicles found</TableCell></TableRow>
                                 ) : vehicles.map(v => (
                                     <TableRow key={v._id}>
                                         <TableCell className="font-medium">{v.name}</TableCell>
@@ -137,16 +141,18 @@ export default function VehiclesPage() {
                                         <TableCell>{formatNumber(v.odometer)} km</TableCell>
                                         <TableCell>{v.region}</TableCell>
                                         <TableCell><StatusBadge status={v.status} /></TableCell>
-                                        <TableCell className="text-right space-x-1">
-                                            <Button variant="ghost" size="icon" onClick={() => openEdit(v)}><Pencil className="h-4 w-4" /></Button>
-                                            {v.status === 'Available' && (
-                                                <Button variant="ghost" size="sm" className="text-xs" onClick={() => toggleStatus(v, 'Retired')}>Retire</Button>
-                                            )}
-                                            {v.status === 'Retired' && (
-                                                <Button variant="ghost" size="sm" className="text-xs" onClick={() => toggleStatus(v, 'Available')}>Activate</Button>
-                                            )}
-                                            <Button variant="ghost" size="icon" onClick={() => handleDelete(v._id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                                        </TableCell>
+                                        {canEdit && (
+                                            <TableCell className="text-right space-x-1">
+                                                <Button variant="ghost" size="icon" onClick={() => openEdit(v)}><Pencil className="h-4 w-4" /></Button>
+                                                {v.status === 'Available' && (
+                                                    <Button variant="ghost" size="sm" className="text-xs" onClick={() => toggleStatus(v, 'Retired')}>Retire</Button>
+                                                )}
+                                                {v.status === 'Retired' && (
+                                                    <Button variant="ghost" size="sm" className="text-xs" onClick={() => toggleStatus(v, 'Available')}>Activate</Button>
+                                                )}
+                                                <Button variant="ghost" size="icon" onClick={() => handleDelete(v._id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                                            </TableCell>
+                                        )}
                                     </TableRow>
                                 ))}
                             </TableBody>
@@ -156,67 +162,69 @@ export default function VehiclesPage() {
             </Card>
 
             {/* Dialog */}
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <DialogContent className="max-w-lg">
-                    <DialogHeader>
-                        <DialogTitle>{editing ? 'Edit Vehicle' : 'Add New Vehicle'}</DialogTitle>
-                    </DialogHeader>
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label>Name / Model</Label>
-                                <Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
+            {canEdit && (
+                <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                    <DialogContent className="max-w-lg">
+                        <DialogHeader>
+                            <DialogTitle>{editing ? 'Edit Vehicle' : 'Add New Vehicle'}</DialogTitle>
+                        </DialogHeader>
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label>Name / Model</Label>
+                                    <Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>License Plate</Label>
+                                    <Input value={form.licensePlate} onChange={e => setForm({ ...form, licensePlate: e.target.value })} required />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Type</Label>
+                                    <Select value={form.type} onValueChange={v => setForm({ ...form, type: v })}>
+                                        <SelectTrigger><SelectValue /></SelectTrigger>
+                                        <SelectContent>
+                                            {['Truck', 'Van', 'Trailer', 'Tanker', 'Flatbed', 'Refrigerated', 'Other'].map(t => (
+                                                <SelectItem key={t} value={t}>{t}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Max Capacity (kg)</Label>
+                                    <Input type="number" value={form.maxCapacity} onChange={e => setForm({ ...form, maxCapacity: e.target.value })} required />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Odometer (km)</Label>
+                                    <Input type="number" value={form.odometer} onChange={e => setForm({ ...form, odometer: e.target.value })} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Region</Label>
+                                    <Input value={form.region} onChange={e => setForm({ ...form, region: e.target.value })} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Acquisition Cost ($)</Label>
+                                    <Input type="number" value={form.acquisitionCost} onChange={e => setForm({ ...form, acquisitionCost: e.target.value })} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Fuel Type</Label>
+                                    <Select value={form.fuelType} onValueChange={v => setForm({ ...form, fuelType: v })}>
+                                        <SelectTrigger><SelectValue /></SelectTrigger>
+                                        <SelectContent>
+                                            {['Diesel', 'Petrol', 'CNG', 'Electric', 'Hybrid'].map(t => (
+                                                <SelectItem key={t} value={t}>{t}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
                             </div>
-                            <div className="space-y-2">
-                                <Label>License Plate</Label>
-                                <Input value={form.licensePlate} onChange={e => setForm({ ...form, licensePlate: e.target.value })} required />
-                            </div>
-                            <div className="space-y-2">
-                                <Label>Type</Label>
-                                <Select value={form.type} onValueChange={v => setForm({ ...form, type: v })}>
-                                    <SelectTrigger><SelectValue /></SelectTrigger>
-                                    <SelectContent>
-                                        {['Truck', 'Van', 'Trailer', 'Tanker', 'Flatbed', 'Refrigerated', 'Other'].map(t => (
-                                            <SelectItem key={t} value={t}>{t}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="space-y-2">
-                                <Label>Max Capacity (kg)</Label>
-                                <Input type="number" value={form.maxCapacity} onChange={e => setForm({ ...form, maxCapacity: e.target.value })} required />
-                            </div>
-                            <div className="space-y-2">
-                                <Label>Odometer (km)</Label>
-                                <Input type="number" value={form.odometer} onChange={e => setForm({ ...form, odometer: e.target.value })} />
-                            </div>
-                            <div className="space-y-2">
-                                <Label>Region</Label>
-                                <Input value={form.region} onChange={e => setForm({ ...form, region: e.target.value })} />
-                            </div>
-                            <div className="space-y-2">
-                                <Label>Acquisition Cost ($)</Label>
-                                <Input type="number" value={form.acquisitionCost} onChange={e => setForm({ ...form, acquisitionCost: e.target.value })} />
-                            </div>
-                            <div className="space-y-2">
-                                <Label>Fuel Type</Label>
-                                <Select value={form.fuelType} onValueChange={v => setForm({ ...form, fuelType: v })}>
-                                    <SelectTrigger><SelectValue /></SelectTrigger>
-                                    <SelectContent>
-                                        {['Diesel', 'Petrol', 'CNG', 'Electric', 'Hybrid'].map(t => (
-                                            <SelectItem key={t} value={t}>{t}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </div>
-                        <DialogFooter>
-                            <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
-                            <Button type="submit">{editing ? 'Update' : 'Create'}</Button>
-                        </DialogFooter>
-                    </form>
-                </DialogContent>
-            </Dialog>
+                            <DialogFooter>
+                                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
+                                <Button type="submit">{editing ? 'Update' : 'Create'}</Button>
+                            </DialogFooter>
+                        </form>
+                    </DialogContent>
+                </Dialog>
+            )}
         </div>
     );
 }

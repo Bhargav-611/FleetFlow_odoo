@@ -17,6 +17,11 @@ const fuelLogRoutes = require('./routes/fuelLog.routes');
 const expenseRoutes = require('./routes/expense.routes');
 const analyticsRoutes = require('./routes/analytics.routes');
 const reportRoutes = require('./routes/report.routes');
+const routeRoutes = require('./routes/route.routes');
+const notificationRoutes = require('./routes/notification.routes');
+
+// Jobs
+const { initializeJobs } = require('./jobs/notification.job');
 
 const app = express();
 
@@ -36,6 +41,8 @@ app.use('/api/v1/fuel-logs', fuelLogRoutes);
 app.use('/api/v1/expenses', expenseRoutes);
 app.use('/api/v1/analytics', analyticsRoutes);
 app.use('/api/v1/reports', reportRoutes);
+app.use('/api/v1/routes', routeRoutes);
+app.use('/api/v1/notifications', notificationRoutes);
 
 // Health check
 app.get('/api/v1/health', (req, res) => {
@@ -49,6 +56,14 @@ const PORT = process.env.PORT || 5000;
 
 const start = async () => {
     await connectDB();
+    
+    // Initialize automated notification jobs
+    try {
+        initializeJobs();
+    } catch (error) {
+        console.warn('⚠️ Could not initialize notification jobs:', error.message);
+    }
+    
     app.listen(PORT, () => {
         console.log(`FleetFlow server running on port ${PORT}`);
     });
