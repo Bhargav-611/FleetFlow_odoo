@@ -1,6 +1,7 @@
 const Trip = require('../models/Trip');
 const Vehicle = require('../models/Vehicle');
 const Driver = require('../models/Driver');
+const emailService = require('../services/email.service');
 
 // @desc    Get all trips
 exports.getTrips = async (req, res, next) => {
@@ -162,6 +163,19 @@ exports.completeTrip = async (req, res, next) => {
             trip.distance = endOdometer - trip.startOdometer;
         }
         await trip.save();
+
+        // Send completion email asynchronously (don't block response)
+        if (driver.email && !trip.completionEmailSent) {
+            try {
+                await emailService.sendTripCompletionEmail(trip, driver, vehicle);
+                trip.completionEmailSent = true;
+                trip.completionEmailSentAt = new Date();
+                await trip.save();
+            } catch (emailError) {
+                console.warn('⚠️ Failed to send trip completion email:', emailError.message);
+                // Don't fail the whole request if email fails
+            }
+        }
 
         const populated = await Trip.findById(trip._id)
             .populate('vehicle', 'name licensePlate')

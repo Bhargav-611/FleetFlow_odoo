@@ -27,6 +27,27 @@ export function AuthProvider({ children }) {
         }
     };
 
+    const register = async (email, password, name, role) => {
+        setLoading(true);
+        try {
+            const { data } = await api.post('/auth/register', {
+                email,
+                password,
+                name,
+                role
+            });
+            localStorage.setItem('fleetflow_token', data.token);
+            localStorage.setItem('fleetflow_user', JSON.stringify(data.user));
+            setToken(data.token);
+            setUser(data.user);
+            return { success: true };
+        } catch (err) {
+            return { success: false, message: err.response?.data?.message || 'Registration failed' };
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const logout = () => {
         localStorage.removeItem('fleetflow_token');
         localStorage.removeItem('fleetflow_user');
@@ -37,7 +58,7 @@ export function AuthProvider({ children }) {
     const isAuthenticated = !!token && !!user;
 
     return (
-        <AuthContext.Provider value={{ user, token, loading, login, logout, isAuthenticated }}>
+        <AuthContext.Provider value={{ user, token, loading, login, register, logout, isAuthenticated }}>
             {children}
         </AuthContext.Provider>
     );

@@ -1,10 +1,22 @@
 const User = require('../models/User');
+const Driver = require('../models/Driver');
 
 // @desc    Register user
 exports.register = async (req, res, next) => {
     try {
         const { name, email, password, role } = req.body;
         const user = await User.create({ name, email, password, role });
+        
+        // If registering as a driver, create a Driver record
+        if (role === 'driver') {
+            await Driver.create({
+                name: user.name,
+                email: user.email,
+                userId: user._id,
+                status: 'On Duty'
+            });
+        }
+        
         const token = user.getSignedJwtToken();
         res.status(201).json({ success: true, token, user: { id: user._id, name: user.name, email: user.email, role: user.role } });
     } catch (err) {

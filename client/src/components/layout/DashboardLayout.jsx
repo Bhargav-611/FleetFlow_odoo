@@ -10,10 +10,10 @@ import { Button } from '@/components/ui/button';
 import { Toaster } from '@/components/ui/toaster';
 
 const navItems = [
-    { to: '/', label: 'Dashboard', icon: LayoutDashboard, roles: ['fleet_manager', 'dispatcher', 'safety_officer', 'financial_analyst'] },
-    { to: '/vehicles', label: 'Vehicles', icon: Truck, roles: ['fleet_manager', 'dispatcher', 'safety_officer', 'financial_analyst'] },
+    { to: '/', label: 'Dashboard', icon: LayoutDashboard, roles: ['fleet_manager', 'dispatcher', 'safety_officer', 'financial_analyst', 'driver'] },
+    { to: '/vehicles', label: 'Vehicles', icon: Truck, roles: ['fleet_manager', 'dispatcher', 'safety_officer', 'financial_analyst', 'driver'] },
     { to: '/trips', label: 'Trips', icon: Route, roles: ['fleet_manager', 'dispatcher'] },
-    { to: '/drivers', label: 'Drivers', icon: Users, roles: ['fleet_manager', 'dispatcher', 'safety_officer'] },
+    { to: '/drivers', label: 'Drivers', icon: Users, roles: ['fleet_manager', 'dispatcher', 'safety_officer', 'driver'] },
     { to: '/maintenance', label: 'Maintenance', icon: Wrench, roles: ['fleet_manager'] },
     { to: '/expenses', label: 'Expenses', icon: DollarSign, roles: ['fleet_manager', 'financial_analyst'] },
     { to: '/fuel-logs', label: 'Fuel Logs', icon: Fuel, roles: ['fleet_manager', 'dispatcher', 'financial_analyst'] },

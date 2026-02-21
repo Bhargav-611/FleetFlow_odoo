@@ -1,8 +1,12 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 
+// Trip Management Styles
+import '@/styles/trips.css';
+
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import LoginPage from '@/pages/LoginPage';
+import RegisterPage from '@/pages/RegisterPage';
 import DashboardPage from '@/pages/DashboardPage';
 import VehiclesPage from '@/pages/VehiclesPage';
 import TripsPage from '@/pages/TripsPage';
@@ -25,10 +29,11 @@ function AppRoutes() {
     return (
         <Routes>
             <Route path="/login" element={isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />} />
+            <Route path="/register" element={isAuthenticated ? <Navigate to="/" replace /> : <RegisterPage />} />
             <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
             <Route path="/vehicles" element={<ProtectedRoute><VehiclesPage /></ProtectedRoute>} />
-            <Route path="/trips" element={<ProtectedRoute roles={['fleet_manager', 'dispatcher']}><TripsPage /></ProtectedRoute>} />
-            <Route path="/drivers" element={<ProtectedRoute roles={['fleet_manager', 'dispatcher', 'safety_officer']}><DriversPage /></ProtectedRoute>} />
+            <Route path="/trips/*" element={<ProtectedRoute roles={['fleet_manager', 'dispatcher']}><TripsPage /></ProtectedRoute>} />
+            <Route path="/drivers" element={<ProtectedRoute roles={['fleet_manager', 'dispatcher', 'safety_officer', 'driver']}><DriversPage /></ProtectedRoute>} />
             <Route path="/maintenance" element={<ProtectedRoute roles={['fleet_manager']}><MaintenancePage /></ProtectedRoute>} />
             <Route path="/expenses" element={<ProtectedRoute roles={['fleet_manager', 'financial_analyst']}><ExpensesPage /></ProtectedRoute>} />
             <Route path="/fuel-logs" element={<ProtectedRoute roles={['fleet_manager', 'dispatcher', 'financial_analyst']}><FuelLogsPage /></ProtectedRoute>} />

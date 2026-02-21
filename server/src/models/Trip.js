@@ -14,6 +14,7 @@ const tripSchema = new mongoose.Schema({
     },
     revenue: { type: Number, default: 0, min: 0 },
     distance: { type: Number, default: 0, min: 0 },
+    duration: { type: Number, default: 0, min: 0 }, // Duration in minutes
     startOdometer: { type: Number, default: 0 },
     endOdometer: { type: Number, default: 0 },
     scheduledDate: { type: Date },
@@ -22,6 +23,26 @@ const tripSchema = new mongoose.Schema({
     cancelledAt: { type: Date },
     notes: { type: String, trim: true },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    
+    // Route data from OpenRouteService
+    routePolyline: [
+        {
+            lat: Number,
+            lng: Number,
+        }
+    ],
+    estimatedDuration: { type: Number, default: 0 }, // Estimated based on route
+    
+    // Cost breakdown
+    estimatedFuelCost: { type: Number, default: 0, min: 0 },
+    estimatedFixedCost: { type: Number, default: 0, min: 0 },
+    estimatedTotalCost: { type: Number, default: 0, min: 0 },
+    actualFuelCost: { type: Number, default: 0, min: 0 },
+    actualTotalCost: { type: Number, default: 0, min: 0 },
+    
+    // Email status
+    completionEmailSent: { type: Boolean, default: false },
+    completionEmailSentAt: { type: Date },
 }, { timestamps: true });
 
 tripSchema.index({ status: 1 });

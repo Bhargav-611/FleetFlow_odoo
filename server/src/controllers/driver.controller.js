@@ -89,3 +89,26 @@ exports.deleteDriver = async (req, res, next) => {
         next(err);
     }
 };
+
+// @desc    Get driver compliance info
+exports.getDriverCompliance = async (req, res, next) => {
+    try {
+        const driver = await Driver.findById(req.params.id);
+        if (!driver) return res.status(404).json({ success: false, message: 'Driver not found' });
+        
+        const isLicenseValid = driver.licenseExpiry > new Date();
+        const completionRate = driver.totalTrips > 0 ? (driver.completedTrips / driver.totalTrips * 100).toFixed(1) : 100;
+        
+        res.json({ 
+            success: true, 
+            data: {
+                ...driver.toObject(),
+                isLicenseValid,
+                completionRate: Number(completionRate),
+                daysUntilExpiry: isLicenseValid ? Math.ceil((driver.licenseExpiry - new Date()) / (1000 * 60 * 60 * 24)) : 0
+            }
+        });
+    } catch (err) {
+        next(err);
+    }
+};
